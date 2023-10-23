@@ -1,0 +1,62 @@
+name: Build and Publish Jsonnet
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Jsonnet Version"
+        required: true
+        default: "v0.20.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build image
+        run: |
+          docker buildx build \
+            --load \
+            --platform ${{ matrix.platform }} \
+            --build-arg JSONNET_REPO_TAG=${{ github.event.inputs.version }} \
+            --tag jsonnet:local \
+            .
+
+      - name: Create container
+        run: |
+          docker create --name temp_container jsonnet:local
+
+      - name: Setup assets name
+        id: assets
+        run: |
+          version='${{ github.event.inputs.version }}'
+          platform=$(echo '${{ matrix.platform }}' | tr '/' '-')
+          echo "archive_name=jsonnet-${version}-${platform}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Copy jsonnet binaries from Docker container
+        id: binaries
+        run: |
+          docker cp temp_container:/workdir/jsonnet ./jsonnet
+          docker cp temp_container:/workdir/jsonnetfmt ./jsonnetfmt
+          tar -czvf ${{ steps.assets.outputs.archive_name }} jsonnet jsonnetfmt
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.event.inputs.version }}
+          tag_name: ${{ github.event.inputs.version }}
+          files: ${{ steps.assets.outputs.archive_name }}
