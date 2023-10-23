@@ -1,14 +1,14 @@
 # jsonnet
-Static compiled jsonnet binaries
+Static compiled jsonnet binaries. Supports linux/amd64 and linux/arm64 platform
 
 
-### Quick setup
-
-```
+### Quick install latest version
 
 ```
+curl -sL https://dodopizza.github.io/google-jsonnet/dl.sh | bash
+```
 
-### Download via curl
+### Manuall install
 
 ```shell
 version=0.20.0
