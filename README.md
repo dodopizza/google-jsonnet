@@ -29,10 +29,7 @@ ARG TARGETARCH
 RUN apt update && apt install -y curl && apt clean
 
 # Jsonnet
-RUN cd /tmp && \
-  version=0.20.0 && \
-  curl -L https://github.com/dodopizza/google-jsonnet/releases/download/v${version}/jsonnet-v${version}-linux-${TARGETARCH}.tar.gz | tar xz && \
-  mv -f jsonnet* /usr/local/bin/
+RUN curl -sL https://dodopizza.github.io/google-jsonnet/dl.sh | bash
 ```
 
 ```shell
